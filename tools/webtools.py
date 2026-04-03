@@ -26,6 +26,7 @@ def get_latest_news(topic):
         source = item.select_one("span.s-source").text if item.select_one("span.s-source") else "Unknown source"
         time = item.select_one("span.s-time").text if item.select_one("span.s-time") else "Unknown time"
         news += f"Title: {title}\nSource: {source}\nTime: {time}\n\n"
+    print(f"Fetched news:\n{news}")
     return news
 
 

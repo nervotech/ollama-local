@@ -3,10 +3,12 @@ from flask_cors import CORS
 from ollama import chat, ChatResponse
 from tools.tool_registery import TOOLS_REGISTRY as modeltools
 from models import MODELS
+from tools.webtools import get_latest_news, access_web_url
+
+MAX_TOOL_ITERATIONS = 20  # prevent infinite loops
 
 app = Flask(__name__)
 CORS(app)
-print("Registered tools:", list(modeltools.values()))
 
 @app.route('/')
 def index():
@@ -17,6 +19,53 @@ def get_models():
     from models import MODELS
     return jsonify({"code": 200, "message": "OK", "data": MODELS})
 
+def tool_response(tool_name, args):
+    try:
+        
+        result = modeltools.get(tool_name).get("call")(**args)
+        return {"role": "tool", "content": f"Tool name:{tool_name}\nOutput: {result}.\n Only use this if the user query requires this information. If not, ignore this output."}
+        tools.append(tool_name)
+    except Exception as e:
+        return {"role": "tool", "content": f"Tool name:{tool_name}\nOutput:''\n Only use this if the user query requires this information. If not, ignore this output."}
+        print(f"Error calling tool {tool_name}: {e}")
+
+
+def execute_with_tools(model, messages, think, tools_enabled):
+    tools_used = []
+
+    for _ in range(MAX_TOOL_ITERATIONS):
+        response = chat(
+            model=model,
+            messages=messages,
+            think=think,
+            tools=modeltools.values() if tools_enabled else None
+        )
+
+        msg = response.message
+
+        # If no tool calls → final answer
+        if not msg.tool_calls:
+            return msg.model_dump(), tools_used
+
+        # Handle tool calls
+        tool_outputs = []
+        for call in msg.tool_calls:
+            tool_name = call["function"]["name"]
+            args = call["function"]["arguments"]
+
+            tool_outputs.append(tool_response(tool_name, args))
+            tools_used.append(tool_name)
+
+        # Append assistant tool call + tool outputs
+        messages.append(msg.model_dump())
+        messages.extend(tool_outputs)
+
+    # Safety fallback
+    return {
+        "role": "assistant",
+        "content": "Max tool iterations reached. Unable to complete request."
+    }, tools_used
+
 @app.route('/chat', methods=['POST'])
 def ollama_chat():
     data = request.get_json()
@@ -24,6 +73,7 @@ def ollama_chat():
     model_key = data.get("model")
     if model_key not in MODELS:
         return jsonify({"code": 400, "message": "Invalid model"}), 400
+
     model = MODELS[model_key]
 
     user_messages = data.get("message", [])
@@ -31,41 +81,21 @@ def ollama_chat():
         return jsonify({"code": 400, "message": "Messages must be a list"}), 400
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Keep your answers short and helpful. Only use a tool when it is truly required to answer the user.Markdown response format is preferred."}
+        {
+            "role": "system",
+            "content": "You are a helpful assistant. Keep answers short. Use tools only when truly required. Keep your thinking short and precise. If you are not sure about some think tell that you don't know. Avoid halucination. "
+        }
     ] + user_messages
 
-    responseMessage = []
-    response = chat(
+    final_response, tools_used = execute_with_tools(
         model=model.get('model'),
         messages=messages,
         think=model.get('think'),
-        tools=modeltools.values() if model.get('tools') else None
+        tools_enabled=model.get('tools')
     )
 
-    # Handle tool calls
-    tool_outputs = []
-    if response.message.tool_calls:
-        tools = []
-        for call in response.message.tool_calls:
-            tool_name = call["function"]["name"]
-            try:
-                tool_desc = modeltools.get(tool_name).get("desc") if modeltools.get(tool_name) else "No description"
-                args = call["function"]["arguments"]
-                result = modeltools.get(tool_name).get("call")(**args)
-                tool_outputs.append({"role": "tool", "content": f"Tool name:{tool_name}\nOutput: {result}.\n Only use this if the user query requires this information. If not, ignore this output."})
-                tools.append(tool_name)
-            except Exception as e:
-                tool_outputs.append({"role": "tool", "content": f"Tool name:{tool_name}\nOutput:''\n Only use this if the user query requires this information. If not, ignore this output."})
-                print(f"Error calling tool {tool_name}: {e}")
-        if tool_outputs:
-            followup = chat(
-                model=model.get('model'),
-                messages=messages + tool_outputs,
-                think=model.get('think'),
-                tools=modeltools.values() if model.get('tools') else None
-            )
-            responseMessage.append({**followup.message.model_dump(), "tools_used": tools})
-    else:
-        responseMessage.append({**response.message.model_dump(), "tools_used": []})
-
-    return jsonify({"code": 200, "message": "OK", "data": responseMessage})
+    return jsonify({
+        "code": 200,
+        "message": "OK",
+        "data": [{**final_response, "tools_used": tools_used}]
+    })
