@@ -7,6 +7,8 @@ from tools.webtools import get_latest_news, access_web_url
 
 MAX_TOOL_ITERATIONS = 20  # prevent infinite loops
 
+#get_latest_news("iran war")
+
 app = Flask(__name__)
 CORS(app)
 
