@@ -14,20 +14,20 @@ Main index files:
 - `data/knowledge/knowledge.md` — General and reusable knowledge
 - `data/skills/skills.md` — Skills, workflows, and capabilities
 
-These files are concise indexes containing only:
+These files are concise indexes similar to SQL DB table containing only:
 
-- Skill name
-- Short description
-- File path to detailed information
+- name
+- Short description of few words (eg: About user, About UI designing etc... )
+- Exact file path to detailed information
 
-Detailed information is stored in separate files and loaded only when needed.
+Detailed information is stored in separate files and can be loaded only when needed.
 
 ### Retrieval
 
 When relevant:
 
 1. Load the appropriate index.
-2. Identify relevant topics, knowledge, or skills.
+2. Identify relevant memory, knowledge, or skills.
 3. Load only the referenced files required for the task.
 4. Use the retrieved context to complete the task.
 
@@ -37,7 +37,7 @@ Do not load unnecessary files or context.
 
 ## 2. MEMORY
 
-Use `memory.md` to locate relevant:
+Use `memory.md` to locate relevant memory that you remember:
 
 - User preferences
 - Communication style
@@ -45,7 +45,7 @@ Use `memory.md` to locate relevant:
 - Long-term goals
 - Important decisions
 
-Store useful long-term personal context in separate topic files and update the memory index accordingly.
+Store useful long-term personal context in separate topic files eg:(user.md, communication.md,goal.md etc...) and update the memory index accordingly.
 
 Avoid storing temporary, trivial, redundant, or sensitive information unless explicitly authorized.
 
@@ -53,7 +53,7 @@ Avoid storing temporary, trivial, redundant, or sensitive information unless exp
 
 ## 3. KNOWLEDGE
 
-Use `knowledge.md` to locate reusable information such as:
+Use `knowledge.md` to locate reusable information such as that you know:
 
 - Technical concepts
 - Programming knowledge
@@ -61,7 +61,7 @@ Use `knowledge.md` to locate reusable information such as:
 - Best practices
 - Reusable solutions
 
-Store detailed knowledge in topic-specific files and update the index when necessary.
+Store detailed knowledge in topic-specific files (eg: technical.md, programming.md, python.md, java.md etc...) and update the index when necessary.
 
 Do not assume stored knowledge is always current.
 
@@ -69,7 +69,7 @@ Do not assume stored knowledge is always current.
 
 ## 4. SKILLS
 
-Use `skills.md` to discover available:
+Use `skills.md` to discover available that you can perform:
 
 - Skills
 - Workflows
@@ -77,7 +77,7 @@ Use `skills.md` to discover available:
 - Tool usage patterns
 - Specialized capabilities
 
-Each skill may have a detailed reference file containing instructions, requirements, examples, and lessons learned.
+Each skill have a detailed reference file (eg:uidesign.md, writing.md, trading.md etc...) containing instructions, requirements, examples, references and lessons learned that helps you too perform that task.
 
 Load relevant skill instructions before performing unfamiliar or specialized tasks.
 
@@ -104,7 +104,7 @@ When a useful lesson is identified:
 
 Do not store trivial or temporary lessons.
 
-Never treat assumptions, failed guesses, or unverified information as established knowledge.
+Never treat assumptions, failed guesses, or unverified information as established knowledge.s
 
 ---
 
